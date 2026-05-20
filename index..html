@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
+<title>ランビエ絞輪 極限検定 - Node of Ranvier Quiz</title>
+<style>
+  :root{
+    --bg:#070b16;
+    --panel:#10192d;
+    --panel2:#16223c;
+    --ink:#eaf2ff;
+    --muted:#9fb1cf;
+    --accent:#58d7ff;
+    --accent2:#9f7bff;
+    --good:#37e68b;
+    --bad:#ff5f7e;
+    --warn:#ffd166;
+    --line:rgba(255,255,255,.12);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;min-height:100%;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:
+    radial-gradient(circle at top left,rgba(88,215,255,.20),transparent 30%),
+    radial-gradient(circle at bottom right,rgba(159,123,255,.18),transparent 35%),
+    linear-gradient(180deg,#060914,#0b1020 55%,#070b16);
+    color:var(--ink);
+  }
+  body{padding:14px}
+  .app{max-width:980px;margin:0 auto}
+  .hero{
+    border:1px solid var(--line);
+    background:linear-gradient(135deg,rgba(16,25,45,.96),rgba(11,16,32,.92));
+    border-radius:24px;
+    padding:22px;
+    box-shadow:0 18px 60px rgba(0,0,0,.36);
+    overflow:hidden;
+    position:relative;
+  }
+  .hero:before{
+    content:"";
+    position:absolute;
+    inset:-120px -60px auto auto;
+    width:300px;height:300px;border-radius:999px;
+    background:radial-gradient(circle,rgba(88,215,255,.28),transparent 66%);
+    pointer-events:none;
+  }
+  .kicker{font-size:12px;letter-spacing:.18em;color:var(--accent);font-weight:800;text-transform:uppercase}
+  h1{font-size:clamp(28px,5vw,52px);line-height:1.04;margin:10px 0 10px}
+  .subtitle{color:var(--muted);line-height:1.8;margin:0 0 16px}
+  .controls{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
+  button{
+    border:0;
+    border-radius:16px;
+    padding:13px 18px;
+    font-weight:850;
+    color:#06111f;
+    background:linear-gradient(135deg,var(--accent),#bdf3ff);
+    box-shadow:0 10px 30px rgba(88,215,255,.25);
+    cursor:pointer;
+    touch-action:manipulation;
+    -webkit-tap-highlight-color:transparent;
+    transition:transform .08s ease,filter .2s ease,opacity .2s ease;
+  }
+  button:active{transform:scale(.98)}
+  button.secondary{background:rgba(255,255,255,.08);color:var(--ink);border:1px solid var(--line);box-shadow:none}
+  button.danger{background:linear-gradient(135deg,#ff6b8a,#ffd0da)}
+  button:disabled{opacity:.45;cursor:not-allowed}
+  .grid{display:grid;grid-template-columns:1.1fr .9fr;gap:14px;margin-top:14px}
+  @media(max-width:780px){.grid{grid-template-columns:1fr}.hero{padding:18px}body{padding:10px}}
+  .card{
+    border:1px solid var(--line);
+    background:rgba(16,25,45,.86);
+    border-radius:22px;
+    padding:16px;
+    box-shadow:0 12px 40px rgba(0,0,0,.23);
+  }
+  .status{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px}
+  @media(max-width:520px){.status{grid-template-columns:repeat(2,1fr)}}
+  .stat{background:rgba(255,255,255,.06);border:1px solid var(--line);border-radius:16px;padding:11px}
+  .stat .label{font-size:11px;color:var(--muted);font-weight:700}
+  .stat .value{font-size:22px;font-weight:900;margin-top:2px}
+  .bar{height:12px;background:rgba(255,255,255,.08);border-radius:999px;overflow:hidden;border:1px solid var(--line)}
+  .bar > div{height:100%;width:0;background:linear-gradient(90deg,var(--accent),var(--accent2));transition:width .35s ease}
+  .stage{color:var(--warn);font-weight:900;font-size:13px;letter-spacing:.08em}
+  .qtext{font-size:clamp(19px,3.5vw,28px);font-weight:900;line-height:1.45;margin:12px 0 14px}
+  .tagrow{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 12px}
+  .tag{font-size:11px;color:#dce8ff;border:1px solid var(--line);background:rgba(255,255,255,.06);padding:5px 9px;border-radius:999px}
+  .options{display:grid;gap:10px}
+  .option{
+    width:100%;
+    text-align:left;
+    color:var(--ink);
+    background:linear-gradient(135deg,rgba(255,255,255,.075),rgba(255,255,255,.045));
+    border:1px solid rgba(255,255,255,.13);
+    box-shadow:none;
+    display:flex;
+    gap:12px;
+    align-items:flex-start;
+    min-height:64px;
+  }
+  .option:hover{filter:brightness(1.08)}
+  .option.correct{border-color:rgba(55,230,139,.9);background:linear-gradient(135deg,rgba(55,230,139,.26),rgba(55,230,139,.08))}
+  .option.wrong{border-color:rgba(255,95,126,.9);background:linear-gradient(135deg,rgba(255,95,126,.23),rgba(255,95,126,.06))}
+  .letter{
+    display:inline-grid;place-items:center;
+    flex:0 0 30px;width:30px;height:30px;border-radius:50%;
+    background:rgba(255,255,255,.12);font-weight:950;color:var(--accent);
+  }
+  .explain{
+    margin-top:14px;
+    border-left:4px solid var(--accent);
+    padding:12px 13px;
+    background:rgba(88,215,255,.08);
+    border-radius:0 14px 14px 0;
+    line-height:1.75;
+    color:#dbeaff;
+    display:none;
+  }
+  .explain.show{display:block}
+  .sideTitle{font-size:15px;font-weight:950;margin:0 0 10px}
+  .axon{
+    height:112px;
+    border-radius:20px;
+    background:
+      linear-gradient(90deg,transparent 0 8%,rgba(88,215,255,.35) 8% 11%,transparent 11% 24%,rgba(88,215,255,.35) 24% 27%,transparent 27% 42%,rgba(88,215,255,.35) 42% 45%,transparent 45% 58%,rgba(88,215,255,.35) 58% 61%,transparent 61% 76%,rgba(88,215,255,.35) 76% 79%,transparent 79%),
+      radial-gradient(circle at center,rgba(255,255,255,.12),transparent 52%),
+      rgba(255,255,255,.04);
+    border:1px solid var(--line);
+    position:relative;
+    overflow:hidden;
+    margin:12px 0;
+  }
+  .axon:after{
+    content:"";
+    position:absolute;left:0;right:0;top:50%;
+    height:18px;transform:translateY(-50%);
+    background:linear-gradient(90deg,#26395e,#76d8ff,#26395e);
+    box-shadow:0 0 20px rgba(88,215,255,.4);
+  }
+  .pulse{
+    position:absolute;top:50%;left:6%;
+    width:28px;height:28px;border-radius:50%;
+    background:var(--warn);
+    box-shadow:0 0 28px var(--warn);
+    transform:translateY(-50%);
+    animation:pulseMove 3.3s linear infinite;
+    z-index:2;
+  }
+  @keyframes pulseMove{0%{left:4%;opacity:.4}10%{opacity:1}100%{left:93%;opacity:.75}}
+  .mini{color:var(--muted);font-size:13px;line-height:1.7}
+  .log{display:grid;gap:8px;max-height:250px;overflow:auto;padding-right:4px}
+  .logItem{border:1px solid var(--line);border-radius:14px;padding:9px;background:rgba(255,255,255,.05);font-size:13px;color:#dce7fb}
+  .result{
+    display:none;
+    text-align:center;
+    padding:22px;
+    border:1px solid var(--line);
+    border-radius:24px;
+    background:linear-gradient(135deg,rgba(88,215,255,.12),rgba(159,123,255,.12));
+    margin-top:14px;
+  }
+  .result.show{display:block}
+  .rank{font-size:38px;font-weight:1000;margin:8px 0;background:linear-gradient(90deg,var(--accent),var(--warn),var(--accent2));-webkit-background-clip:text;color:transparent}
+  .hidden{display:none}
+  .smallNote{font-size:12px;color:var(--muted);margin-top:10px;line-height:1.7}
+  .modeBox{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px}
+  @media(max-width:720px){.modeBox{grid-template-columns:1fr}}
+  .mode{
+    border:1px solid var(--line);border-radius:18px;padding:13px;background:rgba(255,255,255,.05);cursor:pointer;
+  }
+  .mode b{display:block;margin-bottom:6px;color:#fff}
+  .mode span{font-size:12px;color:var(--muted);line-height:1.6}
+  .mode.active{border-color:var(--accent);background:rgba(88,215,255,.12)}
+</style>
+</head>
+<body>
+<div class="app">
+  <section class="hero" id="startScreen">
+    <div class="kicker">Neurobiology Ultra Hard Quiz</div>
+    <h1>ランビエ絞輪<br>極限検定</h1>
+    <p class="subtitle">
+      Node / Paranode / Juxtaparanode / Internode を混ぜた、推測しにくい超マニアック4択ゲームです。<br>
+      正解文だけ長くならないように調整し、似た分子名・似た区画名・微妙な病理トラップを大量投入しています。
+    </p>
+    <div class="modeBox">
+      <div class="mode active" data-mode="normal">
+        <b>標準地獄</b>
+        <span>20問。ランビエ絞輪の基礎から研究者寄りまで。</span>
+      </div>
+      <div class="mode" data-mode="hard">
+        <b>区画崩壊モード</b>
+        <span>選択肢を毎回シャッフル。やや難問が増えます。</span>
+      </div>
+      <div class="mode" data-mode="death">
+        <b>伝導ブロック死闘</b>
+        <span>3ミスで終了。かなりシビアな耐久戦。</span>
+      </div>
+    </div>
+    <div class="controls">
+      <button id="startBtn">検定開始</button>
+      <button class="secondary" id="howBtn">ルールを見る</button>
+    </div>
+    <p class="smallNote" id="rules" style="display:none">
+      タップで回答 → 解説表示 → 次へ。スマホ対応済みです。スコアは「伝導速度 m/s」、ライフは「膜電位安定度」として表示されます。
+    </p>
+  </section>
+
+  <section id="gameScreen" class="hidden">
+    <div class="grid">
+      <main class="card">
+        <div class="status">
+          <div class="stat"><div class="label">問題</div><div class="value" id="qCount">1/20</div></div>
+          <div class="stat"><div class="label">伝導速度</div><div class="value" id="score">0</div></div>
+          <div class="stat"><div class="label">連続正解</div><div class="value" id="streak">0</div></div>
+          <div class="stat"><div class="label">膜電位安定度</div><div class="value" id="life">100</div></div>
+        </div>
+        <div class="bar"><div id="progress"></div></div>
+        <div class="tagrow" id="tags"></div>
+        <div class="stage" id="stage">STAGE</div>
+        <div class="qtext" id="question">Question</div>
+        <div class="options" id="options"></div>
+        <div class="explain" id="explain"></div>
+        <div class="controls">
+          <button id="nextBtn" disabled>次の絞輪へ</button>
+          <button class="secondary" id="quitBtn">終了</button>
+        </div>
+      </main>
+
+      <aside class="card">
+        <h3 class="sideTitle">跳躍伝導モニター</h3>
+        <div class="axon"><div class="pulse"></div></div>
+        <p class="mini">
+          正解：跳躍伝導成功。<br>
+          不正解：局所電流漏出、または区画同定ミス。<br>
+          特に <b>Node / Paranode / Juxtaparanode</b> の取り違えに注意。
+        </p>
+        <h3 class="sideTitle">回答ログ</h3>
+        <div class="log" id="log"></div>
+      </aside>
+    </div>
+
+    <div class="result" id="result">
+      <div class="kicker">Final conduction report</div>
+      <h2>検定終了</h2>
+      <div class="rank" id="rank">S</div>
+      <p id="resultText"></p>
+      <div class="controls" style="justify-content:center">
+        <button id="retryBtn">もう一度挑戦</button>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+const allQuestions = [
+  {
+    stage:"STAGE 1：絞輪の本体を見抜け",
+    tags:["node","基礎に見せた罠"],
+    q:"ランビエ絞輪そのものを最も正確に表す記述はどれか？",
+    a:0,
+    options:[
+      "髄鞘が途切れ、電位依存性Na⁺チャネルが高密度に集まる軸索膜領域",
+      "髄鞘が最も厚く、軸索膜容量が最小化される節間部中央の絶縁領域",
+      "Schwann細胞の核周辺に形成される、ミエリンタンパク質合成の主要領域",
+      "Kv1系チャネルが髄鞘直下に隔離され、活動電位再生を主目的としない領域"
+    ],
+    exp:"正解はA。ランビエ絞輪は髄鞘の切れ目で、Na⁺チャネルが高密度に集まり活動電位を再生する場所です。Dはjuxtaparanode寄りの説明です。"
+  },
+  {
+    stage:"STAGE 1：跳躍伝導",
+    tags:["saltatory conduction","膜容量"],
+    q:"髄鞘が伝導速度を上げる主な理由として最も妥当なのはどれか？",
+    a:2,
+    options:[
+      "軸索内部のNa⁺濃度を局所的に上昇させ、節間部全域で活動電位を発生させるため",
+      "神経伝達物質を髄鞘層内に貯蔵し、シナプス放出を高速化するため",
+      "膜容量を下げ膜抵抗を上げ、電位変化を遠方の絞輪へ伝えやすくするため",
+      "軸索径を周期的に細くし、機械的圧縮によって電流密度を高めるため"
+    ],
+    exp:"正解はC。髄鞘は絶縁体として膜容量を下げ、膜抵抗を上げるため、局所電流が次の絞輪まで届きやすくなります。"
+  },
+  {
+    stage:"STAGE 2：区画名シャッフル",
+    tags:["paranode","接着分子"],
+    q:"Paranodal junctionに最も関係が深い組み合わせはどれか？",
+    a:1,
+    options:[
+      "Nav1.6 / Ankyrin-G / βIV-spectrin",
+      "Caspr / Contactin / Neurofascin-155",
+      "Kv1.1 / Kv1.2 / Caspr2",
+      "Gliomedin / NrCAM / Neurofascin-186"
+    ],
+    exp:"正解はB。Caspr、Contactin、Neurofascin-155はparanodeの軸索―グリア接着に深く関係します。AとDはnode寄り、Cはjuxtaparanode寄りです。"
+  },
+  {
+    stage:"STAGE 2：juxtaparanodeの罠",
+    tags:["juxtaparanode","Kv1"],
+    q:"Juxtaparanodeに比較的特徴的なチャネルとして最も適切なのはどれか？",
+    a:3,
+    options:[
+      "Nav1.6系Na⁺チャネル",
+      "AMPA型グルタミン酸受容体",
+      "機械刺激依存性Piezoチャネル",
+      "Kv1.1/Kv1.2系K⁺チャネル"
+    ],
+    exp:"正解はD。Kv1系K⁺チャネルはjuxtaparanodeに多い代表格です。Nav1.6はnodeに多いので混同注意。"
+  },
+  {
+    stage:"STAGE 3：分子足場",
+    tags:["ankyrin-G","βIV-spectrin"],
+    q:"NodeにおけるNa⁺チャネル集積の足場構造として最も近いものはどれか？",
+    a:0,
+    options:[
+      "Ankyrin-GとβIV-spectrinを含む膜骨格複合体",
+      "Dystrophinとsarcoglycanを中心とする筋膜安定化複合体",
+      "Synaptophysinとsynaptotagminを中心とする小胞放出複合体",
+      "Cadherin-2とβ-cateninを中心とする上皮接着複合体"
+    ],
+    exp:"正解はA。nodeや軸索初節ではAnkyrin-GがNa⁺チャネル局在に重要で、βIV-spectrinも関連します。"
+  },
+  {
+    stage:"STAGE 3：似た名前地獄",
+    tags:["neurofascin","NF186/NF155"],
+    q:"Neurofascin-186とNeurofascin-155の説明として最も妥当なのはどれか？",
+    a:2,
+    options:[
+      "NF186は主にparanodeのグリア側、NF155は主にnodeの軸索側に局在する",
+      "NF186とNF155はいずれもシナプス小胞膜に局在し、髄鞘形成とは無関係である",
+      "NF186はnode側、NF155はparanodeのグリア側に関係する代表的分子である",
+      "NF186はKv1チャネルの孔形成サブユニット、NF155はNa⁺チャネルの補助サブユニットである"
+    ],
+    exp:"正解はC。NF186はnode側、NF155はparanodeのグリア側で語られることが多い分子です。名前が似ているので超頻出トラップです。"
+  },
+  {
+    stage:"STAGE 4：PNS形成因子",
+    tags:["PNS","gliomedin"],
+    q:"末梢神経系のランビエ絞輪形成で、Schwann細胞微絨毛やnode形成との関係で語られる分子はどれか？",
+    a:1,
+    options:[
+      "Osteocalcin",
+      "Gliomedin",
+      "Collagen II",
+      "Myosin heavy chain"
+    ],
+    exp:"正解はB。GliomedinはPNSのnode形成に関係する分子として有名です。選択肢を短くして、長文正解バレを防いでいます。"
+  },
+  {
+    stage:"STAGE 4：CNS/PNSの違い",
+    tags:["oligodendrocyte","Schwann cell"],
+    q:"中枢神経と末梢神経の髄鞘形成細胞の違いとして最も正確なのはどれか？",
+    a:3,
+    options:[
+      "Schwann細胞はCNSでのみ働き、1細胞が多数の節間部を形成する",
+      "オリゴデンドロサイトはPNSでのみ働き、単一軸索を完全に包む",
+      "どちらも神経筋接合部でのみ髄鞘を形成し、軸索途中には関与しない",
+      "オリゴデンドロサイトはCNS、Schwann細胞はPNSで髄鞘形成を担う"
+    ],
+    exp:"正解はD。CNSはオリゴデンドロサイト、PNSはSchwann細胞です。A/Bはわざと入れ替えています。"
+  },
+  {
+    stage:"STAGE 5：伝導失敗",
+    tags:["internode length","conduction block"],
+    q:"ランビエ絞輪間隔が極端に長すぎる場合、理論的に起こりやすい現象はどれか？",
+    a:0,
+    options:[
+      "次の絞輪の閾値に十分な脱分極が届かず、伝導失敗が起こりやすくなる",
+      "Na⁺チャネルが自動的に節間部全域へ均一拡散し、連続伝導へ完全移行する",
+      "軸索内の神経伝達物質が逆流し、活動電位が化学シナプス化される",
+      "髄鞘が厚くなるため、必ず伝導速度だけが無制限に上昇する"
+    ],
+    exp:"正解はA。節間距離が長すぎると受動的電位変化が減衰し、次のnodeを発火させられない可能性があります。"
+  },
+  {
+    stage:"STAGE 5：軸索初節との比較",
+    tags:["AIS","node"],
+    q:"ランビエ絞輪と軸索初節の共通点として最も適切なのはどれか？",
+    a:2,
+    options:[
+      "どちらもSchwann細胞によってのみ形成されるPNS専用構造である",
+      "どちらも神経伝達物質を大量放出するシナプス前終末である",
+      "どちらもNa⁺チャネルとAnkyrin-Gに富む興奮性膜領域である",
+      "どちらも髄鞘が最厚となるため、活動電位は発生しない"
+    ],
+    exp:"正解はC。軸索初節とnodeはNa⁺チャネル集積、Ankyrin-G依存性の膜区画という点で比較されます。"
+  },
+  {
+    stage:"STAGE 6：脱髄病理",
+    tags:["demyelination","MS"],
+    q:"脱髄によって伝導障害が起こる説明として最も妥当なのはどれか？",
+    a:1,
+    options:[
+      "Na⁺チャネルがすべてミトコンドリアへ移行し、酸化的リン酸化が停止する",
+      "膜容量増加や電流漏出により、次の絞輪を十分に脱分極しにくくなる",
+      "シナプス後膜の受容体が消失し、神経筋接合部のみが閉鎖される",
+      "軸索内微小管が逆向きに重合し、活動電位が常に逆行性になる"
+    ],
+    exp:"正解はB。脱髄では絶縁性が低下し、膜容量増加や電流漏出により伝導遅延・伝導ブロックが起こります。"
+  },
+  {
+    stage:"STAGE 6：疾患の位置",
+    tags:["MS","GBS","CIDP"],
+    q:"多発性硬化症とGuillain-Barré症候群の組み合わせとして最も妥当なのはどれか？",
+    a:0,
+    options:[
+      "MSは主にCNS、GBSは主にPNSの脱髄または軸索障害として扱われる",
+      "MSはPNSのSchwann細胞核疾患、GBSはCNSの黒質疾患である",
+      "MSもGBSも神経筋接合部のACh受容体だけを直接破壊する疾患である",
+      "MSは小脳Purkinje細胞だけ、GBSは網膜視細胞だけの髄鞘疾患である"
+    ],
+    exp:"正解はA。MSは中枢神経系、GBSは末梢神経系の急性ニューロパチーとして理解されます。"
+  },
+  {
+    stage:"STAGE 7：最も不適切を選べ",
+    tags:["negative question","ひっかけ"],
+    q:"ランビエ絞輪について、最も不適切な記述はどれか？",
+    a:3,
+    options:[
+      "電位依存性Na⁺チャネルが高密度に存在する領域である",
+      "跳躍伝導において活動電位再生の場となる",
+      "髄鞘に挟まれた短い無髄鞘領域として扱われる",
+      "髄鞘が最も厚く、K⁺チャネルのみで活動電位を開始する領域である"
+    ],
+    exp:"正解はD。この問題は『不適切』を選ぶ問題です。nodeは髄鞘が最も厚い場所ではなく、Na⁺チャネルが重要です。"
+  },
+  {
+    stage:"STAGE 7：区画同定",
+    tags:["node/paranode/juxtaparanode","鬼畜"],
+    q:"Nav1.6、Ankyrin-G、Neurofascin-186という組み合わせに最も近い区画はどれか？",
+    a:0,
+    options:[
+      "Node",
+      "Paranode",
+      "Juxtaparanode",
+      "Compact internode"
+    ],
+    exp:"正解はA。Nav1.6、Ankyrin-G、NF186はnode側を連想するセットです。選択肢が短いほど逆に知識が必要になります。"
+  },
+  {
+    stage:"STAGE 8：分離の破綻",
+    tags:["domain organization","Kv/Nav"],
+    q:"Node/paranode/juxtaparanodeの区画化が崩れた場合に最も起こりうる現象はどれか？",
+    a:2,
+    options:[
+      "軸索が即座に樹状突起へ変換され、化学シナプス数のみが増加する",
+      "髄鞘が全て神経伝達物質小胞へ変化し、電気伝導が化学伝導化する",
+      "NavチャネルとKvチャネルの空間的分離が乱れ、伝導効率や安定性が低下する",
+      "Na⁺チャネルが核膜へ移動し、DNA複製速度が上昇して伝導速度が増す"
+    ],
+    exp:"正解はC。区画化の破綻はチャネル局在の乱れにつながり、伝導の安定性を落とします。"
+  },
+  {
+    stage:"STAGE 8：Ca²⁺トラップ",
+    tags:["channel","推測防止"],
+    q:"ランビエ絞輪の活動電位再生を担う主役として、最も中心的なものはどれか？",
+    a:1,
+    options:[
+      "T型Ca²⁺チャネル",
+      "電位依存性Na⁺チャネル",
+      "ATP感受性K⁺チャネル",
+      "NMDA型グルタミン酸受容体"
+    ],
+    exp:"正解はB。活動電位の急速な立ち上がりと再生には電位依存性Na⁺チャネルが重要です。"
+  },
+  {
+    stage:"STAGE 9：微細構造",
+    tags:["Schwann microvilli","PNS"],
+    q:"PNSのnode周辺で、Schwann細胞側からnode形成を支える構造として語られやすいものはどれか？",
+    a:3,
+    options:[
+      "オリゴデンドロサイトの多極性突起のみ",
+      "神経筋接合部のシナプス後ひだのみ",
+      "アストロサイト終足の血管周囲膜のみ",
+      "Schwann細胞微絨毛と関連分子群"
+    ],
+    exp:"正解はD。末梢神経ではSchwann細胞の微絨毛がnode形成・維持に関わる文脈で出てきます。"
+  },
+  {
+    stage:"STAGE 9：コンパクト髄鞘",
+    tags:["internode","myelin"],
+    q:"Compact internodeの説明として最も近いものはどれか？",
+    a:0,
+    options:[
+      "髄鞘が軸索を絶縁し、node間の受動的電位伝播を助ける領域",
+      "Na⁺チャネルが最大密度となり、活動電位が毎回再生される領域",
+      "Caspr/contactin/NF155接着が最も集中する軸索―グリア境界部",
+      "Kv1チャネルが露出し、node直上にNa⁺チャネルと混在する領域"
+    ],
+    exp:"正解はA。Compact internodeは髄鞘に覆われた節間部で、絶縁性が伝導速度に寄与します。Bはnode、Cはparanodeです。"
+  },
+  {
+    stage:"STAGE 10：用語の罠",
+    tags:["名称","誤解"],
+    q:"『絞輪』という名称から誤解しやすい点として、最も正しい注意はどれか？",
+    a:2,
+    options:[
+      "実際には軸索が完全に断裂し、隣の軸索とシナプスで接続する部位である",
+      "実際には髄鞘が厚く巻き増しされ、電位変化を完全に停止する部位である",
+      "軸索が強く締め付けられるというより、髄鞘の切れ目にある機能的区画である",
+      "筋細胞の収縮輪と同じ構造で、神経細胞には本来存在しない名称である"
+    ],
+    exp:"正解はC。『絞輪』という字面は物理的な締め付けを想像させますが、重要なのは髄鞘の切れ目にある特殊な膜区画という理解です。"
+  },
+  {
+    stage:"FINAL：総合理解",
+    tags:["総合","最終問題"],
+    q:"ランビエ絞輪を単なる『すき間』と説明することの最大の問題点はどれか？",
+    a:1,
+    options:[
+      "実際にはシナプス小胞を放出する化学シナプスなので、電気的説明が全て不要になるため",
+      "分子足場、チャネル局在、軸索―グリア相互作用が統合された特殊区画だから",
+      "髄鞘が最も厚い場所なので、すき間ではなく完全な絶縁壁と呼ぶべきだから",
+      "ランビエ絞輪は筋細胞だけに存在し、神経科学の用語ではないから"
+    ],
+    exp:"正解はB。ランビエ絞輪は単なる空白ではなく、Na⁺チャネル、足場タンパク質、接着分子などが整理された高度な機能区画です。"
+  }
+];
+
+let questions = [];
+let idx = 0;
+let score = 0;
+let streak = 0;
+let life = 100;
+let selectedMode = "normal";
+let answered = false;
+let misses = 0;
+
+const $ = (id)=>document.getElementById(id);
+const startScreen = $("startScreen");
+const gameScreen = $("gameScreen");
+const qCount = $("qCount");
+const scoreEl = $("score");
+const streakEl = $("streak");
+const lifeEl = $("life");
+const progress = $("progress");
+const tagsEl = $("tags");
+const stageEl = $("stage");
+const questionEl = $("question");
+const optionsEl = $("options");
+const explainEl = $("explain");
+const nextBtn = $("nextBtn");
+const logEl = $("log");
+const result = $("result");
+
+function shuffle(arr){
+  const a = [...arr];
+  for(let i=a.length-1;i>0;i--){
+    const j=Math.floor(Math.random()*(i+1));
+    [a[i],a[j]]=[a[j],a[i]];
+  }
+  return a;
+}
+
+function setupQuestions(){
+  let base = [...allQuestions];
+  if(selectedMode === "hard" || selectedMode === "death") base = shuffle(base);
+  questions = base.map(q=>{
+    const opts = q.options.map((text,i)=>({text, correct:i===q.a}));
+    const shuffled = (selectedMode==="normal") ? opts : shuffle(opts);
+    return {
+      ...q,
+      shuffledOptions: shuffled,
+      correctIndex: shuffled.findIndex(o=>o.correct)
+    };
+  });
+}
+
+function startGame(){
+  setupQuestions();
+  idx = 0; score = 0; streak = 0; life = 100; answered=false; misses=0;
+  startScreen.classList.add("hidden");
+  gameScreen.classList.remove("hidden");
+  result.classList.remove("show");
+  logEl.innerHTML = "";
+  renderQuestion();
+}
+
+function renderQuestion(){
+  answered = false;
+  const q = questions[idx];
+  qCount.textContent = `${idx+1}/${questions.length}`;
+  scoreEl.textContent = score;
+  streakEl.textContent = streak;
+  lifeEl.textContent = life;
+  progress.style.width = `${(idx/questions.length)*100}%`;
+  stageEl.textContent = q.stage;
+  questionEl.textContent = q.q;
+  tagsEl.innerHTML = q.tags.map(t=>`<span class="tag">${t}</span>`).join("");
+  explainEl.classList.remove("show");
+  explainEl.innerHTML = "";
+  nextBtn.disabled = true;
+  optionsEl.innerHTML = "";
+  q.shuffledOptions.forEach((opt,i)=>{
+    const btn = document.createElement("button");
+    btn.className = "option";
+    btn.innerHTML = `<span class="letter">${String.fromCharCode(65+i)}</span><span>${opt.text}</span>`;
+    btn.addEventListener("click",()=>answer(i));
+    btn.addEventListener("touchend",(e)=>{ e.preventDefault(); answer(i); }, {passive:false});
+    optionsEl.appendChild(btn);
+  });
+}
+
+function answer(choice){
+  if(answered) return;
+  answered = true;
+  const q = questions[idx];
+  const correct = choice === q.correctIndex;
+  const buttons = [...document.querySelectorAll(".option")];
+
+  buttons.forEach((b,i)=>{
+    b.disabled = true;
+    if(i === q.correctIndex) b.classList.add("correct");
+    if(i === choice && !correct) b.classList.add("wrong");
+  });
+
+  if(correct){
+    streak++;
+    const bonus = 10 + Math.min(streak*3, 30);
+    score += bonus;
+    life = Math.min(100, life + 3);
+    addLog(`Q${idx+1}：跳躍伝導成功 +${bonus}`);
+  }else{
+    streak = 0;
+    misses++;
+    life -= (selectedMode==="death") ? 34 : 14;
+    if(life < 0) life = 0;
+    addLog(`Q${idx+1}：伝導ブロック発生`);
+  }
+
+  scoreEl.textContent = score;
+  streakEl.textContent = streak;
+  lifeEl.textContent = life;
+
+  explainEl.innerHTML = `<b>${correct ? "正解！跳躍伝導成功。" : "不正解。伝導ブロック発生。"}</b><br>${q.exp}`;
+  explainEl.classList.add("show");
+  nextBtn.disabled = false;
+
+  if(selectedMode==="death" && misses >= 3){
+    nextBtn.textContent = "結果を見る";
+  }
+}
+
+function addLog(text){
+  const div = document.createElement("div");
+  div.className = "logItem";
+  div.textContent = text;
+  logEl.prepend(div);
+}
+
+function next(){
+  if(selectedMode==="death" && misses >= 3){
+    endGame();
+    return;
+  }
+  idx++;
+  nextBtn.textContent = "次の絞輪へ";
+  if(idx >= questions.length) endGame();
+  else renderQuestion();
+}
+
+function endGame(){
+  progress.style.width = "100%";
+  const correctApprox = Math.round(score / 18);
+  let rank = "C：無髄線維レベル";
+  let msg = "まだ膜電位が漏れています。node/paranode/juxtaparanodeの区別から再挑戦！";
+
+  const ratio = score / (questions.length * 25);
+  if(ratio >= .86){
+    rank = "SSS：Nav1.6の守護者";
+    msg = "これは強いです。分子局在・区画構造・脱髄病理までかなり深く押さえています。";
+  }else if(ratio >= .72){
+    rank = "SS：ランビエ絞輪の亡霊";
+    msg = "かなり研究者寄りの理解です。NF186/NF155トラップにもかなり耐えています。";
+  }else if(ratio >= .58){
+    rank = "S：絞輪構造研究員";
+    msg = "十分にマニアックです。区画名シャッフルへの耐性もあります。";
+  }else if(ratio >= .42){
+    rank = "A：跳躍伝導解析者";
+    msg = "基礎はかなり見えています。paranode周辺分子を詰めれば一気に伸びます。";
+  }else if(ratio >= .28){
+    rank = "B：初級ミエリン観察者";
+    msg = "nodeの役割は見えています。juxtaparanodeとparanodeの違いが次の壁です。";
+  }
+
+  $("rank").textContent = rank;
+  $("resultText").innerHTML = `最終伝導速度：<b>${score} m/s</b><br>残存膜電位安定度：<b>${life}</b><br>${msg}`;
+  result.classList.add("show");
+  result.scrollIntoView({behavior:"smooth",block:"center"});
+}
+
+document.querySelectorAll(".mode").forEach(el=>{
+  el.addEventListener("click",()=>{
+    document.querySelectorAll(".mode").forEach(m=>m.classList.remove("active"));
+    el.classList.add("active");
+    selectedMode = el.dataset.mode;
+  });
+});
+
+$("startBtn").addEventListener("click",startGame);
+$("howBtn").addEventListener("click",()=>{
+  const r = $("rules");
+  r.style.display = r.style.display === "none" ? "block" : "none";
+});
+nextBtn.addEventListener("click",next);
+$("quitBtn").addEventListener("click",endGame);
+$("retryBtn").addEventListener("click",()=>{
+  result.classList.remove("show");
+  startGame();
+});
+</script>
+</body>
+</html>
